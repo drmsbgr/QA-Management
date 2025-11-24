@@ -1,13 +1,15 @@
 ﻿using QA.Library.Factories;
 using QA.Library.Extensions;
 
-QuestionFactory
+var response = QuestionFactory
 .Create("2+2=?")
 .AddConditionalResponseStage<string>(
     conditionFunc: r => r == "4",
     then: "Doğru cevap!",
     otherwise: "Yanlış cevap!")
-.Execute();
+.Execute<string>();
+
+System.Console.WriteLine(response);
 
 QuestionFactory.Create("Kaç adet 'elma' yazalım?")
 .AddConditionalActionStage<string>(

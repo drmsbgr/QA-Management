@@ -1,7 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageId>drmsbgr.QALibrary</PackageId>
+    <Version>1.0.2</Version>
+    <Authors>Buğra DURMUŞ</Authors>
+    <Description>Konsol uygulamaları için akıcı harika bir soru-cevap kütüphanesi</Description>
+    <RepositoryUrl>https://github.com/drmsbgr/QA-Management</RepositoryUrl>
     <TargetFramework>net10.0</TargetFramework>
+
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>

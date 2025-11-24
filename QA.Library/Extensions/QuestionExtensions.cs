@@ -42,6 +42,27 @@ public static class QuestionExtensions
             return question;
         }
 
+        public Question AddFinishExecIfTrue<T>(Func<T, bool> conditionFunc, Action<T>? then = null, Func<T, object>? otherwiseReturn = null)
+        {
+            question.Stages.Add(StageFactory.Create<T>(r =>
+            {
+                if (conditionFunc(r))
+                {
+                    then?.Invoke(r);
+                    return StageReturnFactory.CreateFinishExec();
+                }
+                else
+                {
+                    if (otherwiseReturn is not null)
+                        return StageReturnFactory.CreateContinueExec(otherwiseReturn(r));
+                    else
+                        return StageReturnFactory.CreateAskAgain();
+                }
+            }));
+
+            return question;
+        }
+
         public Question AddConditionalActionStage<T>(Func<T, bool> conditionFunc, Action<T>? then = null, Action<T>? otherwise = null, Func<T, object>? thenReturn = null)
         {
             question.Stages.Add(StageFactory.Create<T>(r =>
@@ -70,10 +91,20 @@ public static class QuestionExtensions
             return question;
         }
 
-        public void Execute()
+        private void AskQuestion()
         {
             Console.WriteLine(question.QuestionText);
             Console.Write("->");
+        }
+
+        public void Execute()
+        {
+            _ = Execute<object>(question);
+        }
+
+        public T Execute<T>()
+        {
+            AskQuestion(question);
 
             object input = Console.ReadLine()!;
 
@@ -89,12 +120,13 @@ public static class QuestionExtensions
                         Console.WriteLine("Tekrar denemek için bir tuşa basın...");
                         Console.ReadKey();
                         Console.Clear();
-                        Execute(question);
-                        return;
+                        return Execute<T>(question);
                     case StageTasks.FinishExec:
-                        return;
+                        return (T)input;
                 }
             }
+
+            return (T)input;
         }
     }
 }
