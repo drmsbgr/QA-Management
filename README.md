@@ -6,12 +6,12 @@
 
 ## ✨ Özellikler
 
-*   **Akıcı Arayüz (Fluent API):** Zincirleme metotlarla kolayca karmaşık soru akışları oluşturun.
-*   **Aşamalı Yapı (Staging):** Soruları, her biri kendi mantığına sahip olan birden çok aşamaya bölün.
-*   **Şartlı Mantık:** Kullanıcının girdisine göre farklı aksiyonlar veya yanıtlar tetikleyin.
-*   **Girdi Doğrulama:** Geçersiz girdi durumunda soruyu otomatik olarak yeniden sorun.
-*   **Aşamalar Arası Veri Aktarımı:** Bir aşamanın çıktısını bir sonraki aşamaya girdi olarak kullanın.
-*   **Genişletilebilir:** Kendi özel aşama mantıklarınızı kolayca ekleyin.
+- **Akıcı Arayüz (Fluent API):** Zincirleme metotlarla kolayca karmaşık soru akışları oluşturun.
+- **Aşamalı Yapı (Staging):** Soruları, her biri kendi mantığına sahip olan birden çok aşamaya bölün.
+- **Şartlı Mantık:** Kullanıcının girdisine göre farklı aksiyonlar veya yanıtlar tetikleyin.
+- **Girdi Doğrulama:** Geçersiz girdi durumunda soruyu otomatik olarak yeniden sorun.
+- **Aşamalar Arası Veri Aktarımı:** Bir aşamanın çıktısını bir sonraki aşamaya girdi olarak kullanın.
+- **Genişletilebilir:** Kendi özel aşama mantıklarınızı kolayca ekleyin.
 
 ## 🚀 Kullanım
 
@@ -19,19 +19,21 @@ Kütüphaneyi kullanmak oldukça basittir. `QuestionFactory` ile bir soru oluşt
 
 ### Örnek 1: Basit Doğru/Yanlış Cevap
 
-Kullanıcının cevabına göre "Doğru" veya "Yanlış" yazdıran temel bir soru.
+Kullanıcının cevabına göre bir yanıt veren ve girilen değeri bir değişkene atayan temel bir soru. `Execute<T>` metodu, akış tamamlandığında son değeri döndürür.
 
 ```csharp
 using QA.Library.Factories;
 using QA.Library.Extensions;
 
-QuestionFactory
+var response = QuestionFactory
 .Create("2+2=?")
 .AddConditionalResponseStage<string>(
     conditionFunc: r => r == "4",
-    then: "Doğru cevap!",
+    then: "Doğru cevap!", // Koşul doğruysa çalışır ve akış yeniden sorulur
     otherwise: "Yanlış cevap!")
-.Execute();
+.Execute<string>();
+
+Console.WriteLine(response);
 ```
 
 ### Örnek 2: Girdiyi Doğrulama ve Aksiyon Alma
@@ -75,12 +77,86 @@ QuestionFactory
         thenReturn: r => int.Parse(r))
     .AddStage<int>(num2 =>
     {
-        Console.WriteLine($"{num1} + {num2} = {num1 + {num2}}");
+        Console.WriteLine($"{num1} + {num2} = {num1 + num2}");
         return StageReturnFactory.CreateFinishExec();
     })
     .Execute();
     return StageReturnFactory.CreateFinishExec();
 })
+.Execute();
+```
+
+### Örnek 4: Koşula Göre Değer Döndürme
+
+Bu örnek, kullanıcının girdisine göre (`ekmek` veya `süt`) farklı bir değer döndürmek için `AddConditionalReturnStage` metodunu kullanır. Döndürülen bu değer, bir sonraki aşamada (`AddStage`) işlenir ve ekrana yazdırılır.
+
+```csharp
+QuestionFactory
+.Create("ekmek mi aldın yoksa süt mü aldın?")
+.AddConditionalActionStage<string>(
+    conditionFunc: r => r == "ekmek" || r == "süt",
+    then: default,
+    otherwise: (_) => Console.WriteLine("başka bir şey almadın bence :)"),
+    thenReturn: (r) => r
+)
+.AddConditionalReturnStage<string>(
+    conditionFunc: r => r == "ekmek",
+    thenReturn: r => "{data:ekmek}",
+    otherwiseReturn: r => "{data:süt}"
+)
+.AddStage<string>(
+    r =>
+    {
+        Console.WriteLine($"{r}");
+        return StageReturnFactory.CreateFinishExec();
+    }
+)
+.Execute();
+```
+
+### Örnek 5: Kapsamlı Hesap Makinesi
+
+Bu örnek, iç içe geçmiş birden çok soru ve koşul kullanarak basit bir hesap makinesi oluşturur. Kullanıcıdan iki sayı ve bir işlem alır, ardından sonucu `AddExecAndFinishStage` ile hesaplayıp akışı sonlandırır.
+
+```csharp
+QuestionFactory
+.Create("Sayı 1:")
+.AddConditionStage<string>(
+    conditionFunc: r => int.TryParse(r, out var _),
+    thenReturn: r => int.Parse(r),
+    otherwise: (_) => Console.WriteLine("Sayı girmeniz bekleniyordu!"))
+.AddStage<int>(
+    num1 =>
+    {
+        QuestionFactory
+        .Create("Sayı 2:")
+        .AddConditionStage<string>(
+            conditionFunc: r => int.TryParse(r, out var _),
+            thenReturn: r => int.Parse(r),
+            otherwise: (_) => Console.WriteLine("Sayı girmeniz bekleniyordu!")
+        )
+        .AddStage<int>(
+            num2 =>
+            {
+                QuestionFactory
+                .Create("İşlem seçin (+,-,*,/)")
+                .AddConditionStage<string>(
+                    conditionFunc: r => r == "+" || r == "-" || r == "*" || r == "/",
+                    thenReturn: r => r,
+                    otherwise: (_) => Console.WriteLine("Geçersiz işlem!"))
+                .AddExecAndFinishStage<string>(
+                    op => Console.WriteLine($"{num1} {op} {num2} = {op switch { "+" => num1 + num2, "-" => num1 - num2, "*" => num1 * num2, "/" => num1 / num2, _ => 0 }}")
+                )
+                .Execute();
+
+                return StageReturnFactory.CreateFinishExec();
+            }
+        )
+        .Execute();
+
+        return StageReturnFactory.CreateFinishExec();
+    }
+)
 .Execute();
 ```
 

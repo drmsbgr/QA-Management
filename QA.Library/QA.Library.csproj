@@ -3,7 +3,7 @@
   <PropertyGroup>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>drmsbgr.QALibrary</PackageId>
-    <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
     <Authors>Buğra DURMUŞ</Authors>
     <Description>Konsol uygulamaları için akıcı harika bir soru-cevap kütüphanesi</Description>
     <RepositoryUrl>https://github.com/drmsbgr/QA-Management</RepositoryUrl>

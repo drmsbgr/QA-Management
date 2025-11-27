@@ -7,9 +7,20 @@ public static class QuestionExtensions
 {
     extension(Question question)
     {
-        public Question AddConditionStage<T>(Func<T, bool> conditionFunc, Func<T, object>? thenReturn = null)
+        public Question AddConditionalReturnStage<T>(Func<T, bool> conditionFunc, Func<T, object> thenReturn, Func<T, object> otherwiseReturn)
         {
-            question.AddStage<T>(r =>
+            return question.AddStage<T>(r =>
+            {
+                if (conditionFunc(r))
+                    return StageReturnFactory.CreateContinueExec(thenReturn(r));
+                else
+                    return StageReturnFactory.CreateContinueExec(otherwiseReturn(r));
+            });
+        }
+
+        public Question AddConditionStage<T>(Func<T, bool> conditionFunc, Func<T, object>? thenReturn = null, Action<T>? otherwise = null)
+        {
+            return question.AddStage<T>(r =>
             {
                 if (conditionFunc(r))
                 {
@@ -19,9 +30,11 @@ public static class QuestionExtensions
                         return StageReturnFactory.CreateFinishExec();
                 }
                 else
+                {
+                    otherwise?.Invoke(r);
                     return StageReturnFactory.CreateAskAgain();
+                }
             });
-            return question;
         }
 
         public Question AddConditionalResponseStage<T>(Func<T, bool> conditionFunc, string then, string otherwise)
@@ -85,6 +98,15 @@ public static class QuestionExtensions
             return question;
         }
 
+        public Question AddExecAndFinishStage<T>(Action<T> action)
+        {
+            return question.AddStage<T>(r =>
+            {
+                action(r);
+                return StageReturnFactory.CreateFinishExec();
+            });
+        }
+
         public Question AddStage<T>(Func<T, StageReturn> stageFunc)
         {
             question.Stages.Add(StageFactory.Create(stageFunc));
@@ -104,7 +126,7 @@ public static class QuestionExtensions
 
         public T Execute<T>()
         {
-            AskQuestion(question);
+            question.AskQuestion();
 
             object input = Console.ReadLine()!;
 
