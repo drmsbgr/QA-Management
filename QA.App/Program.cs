@@ -3,40 +3,39 @@ using QA.Library.Extensions;
 
 QuestionFactory
 .Create("Sayı 1:")
-.AddConditionStage<string>(
+.AddConditionalReturnOrExecStage<string>(
     conditionFunc: r => int.TryParse(r, out var _),
     thenReturn: r => int.Parse(r),
     otherwise: (_) => Console.WriteLine("Sayı girmeniz bekleniyordu!"))
-.AddStage<int>(
+.AddExecAndFinishStage<int>(
     num1 =>
     {
         QuestionFactory
         .Create("Sayı 2:")
-        .AddConditionStage<string>(
+        .AddConditionalReturnOrExecStage<string>(
             conditionFunc: r => int.TryParse(r, out var _),
             thenReturn: r => int.Parse(r),
             otherwise: (_) => Console.WriteLine("Sayı girmeniz bekleniyordu!")
         )
-        .AddStage<int>(
+        .AddExecAndFinishStage<int>(
             num2 =>
             {
                 QuestionFactory
                 .Create("İşlem seçin (+,-,*,/)")
-                .AddConditionStage<string>(
+                .AddConditionalReturnOrExecStage<string>
+                (
                     conditionFunc: r => r == "+" || r == "-" || r == "*" || r == "/",
                     thenReturn: r => r,
-                    otherwise: (_) => Console.WriteLine("Geçersiz işlem!"))
-                .AddExecAndFinishStage<string>(
+                    otherwise: (_) => Console.WriteLine("Geçersiz işlem!")
+                )
+                .AddExecAndFinishStage<string>
+                (
                     op => Console.WriteLine($"{num1} {op} {num2} = {op switch { "+" => num1 + num2, "-" => num1 - num2, "*" => num1 * num2, "/" => num1 / num2, _ => 0 }}")
                 )
                 .Execute();
-
-                return StageReturnFactory.CreateFinishExec();
             }
         )
         .Execute();
-
-        return StageReturnFactory.CreateFinishExec();
     }
 )
 .Execute();
@@ -51,10 +50,10 @@ var response = QuestionFactory
 
 Console.WriteLine(response);
 
-QuestionFactory.Create("Kaç adet 'elma' yazalım?")
+QuestionFactory
+.Create("Kaç adet 'elma' yazalım?")
 .AddConditionalActionStage<string>(
     conditionFunc: r => int.TryParse(r, out var _),
-    then: default,
     otherwise: (_) => Console.WriteLine("Bir sayı girmen bekleniyordu!"),
     thenReturn: (r) => int.Parse(r))
 .AddConditionalActionStage<int>(
@@ -70,43 +69,37 @@ QuestionFactory.Create("Kaç adet 'elma' yazalım?")
 
 QuestionFactory
 .Create("İlk sayıyı girin")
-.AddConditionStage<string>(
+.AddConditionalReturnOrExecStage<string>
+(
     conditionFunc: r => int.TryParse(r, out var _),
-    thenReturn: r => int.Parse(r))
-.AddStage<int>(num1 =>
+    thenReturn: r => int.Parse(r)
+)
+.AddExecAndFinishStage<int>(num1 =>
 {
     QuestionFactory.Create("İkinci sayıyı girin")
-    .AddConditionStage<string>(
+    .AddConditionalReturnOrExecStage<string>
+    (
         conditionFunc: r => int.TryParse(r, out var _),
-        thenReturn: r => int.Parse(r))
-    .AddStage<int>(num2 =>
-    {
-        Console.WriteLine($"{num1} + {num2} = {num1 + num2}");
-        return StageReturnFactory.CreateFinishExec();
-    })
+        thenReturn: r => int.Parse(r)
+    )
+    .AddExecAndFinishStage<int>(num2 => Console.WriteLine($"{num1} + {num2} = {num1 + num2}"))
     .Execute();
-    return StageReturnFactory.CreateFinishExec();
 })
 .Execute();
 
 QuestionFactory
 .Create("ekmek mi aldın yoksa süt mü aldın?")
-.AddConditionalActionStage<string>(
+.AddConditionalActionStage<string>
+(
     conditionFunc: r => r == "ekmek" || r == "süt",
-    then: default,
     otherwise: (_) => Console.WriteLine("başka bir şey almadın bence :)"),
     thenReturn: (r) => r
 )
-.AddConditionalReturnStage<string>(
+.AddConditionalReturnStage<string>
+(
     conditionFunc: r => r == "ekmek",
     thenReturn: r => "{data:ekmek}",
     otherwiseReturn: r => "{data:süt}"
 )
-.AddStage<string>(
-    r =>
-    {
-        Console.WriteLine($"{r}");
-        return StageReturnFactory.CreateFinishExec();
-    }
-)
+.AddExecAndFinishStage<string>(r => Console.WriteLine($"{r}"))
 .Execute();
